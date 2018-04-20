@@ -3,6 +3,8 @@ import sqlite3
 from bs4 import BeautifulSoup
 import sys
 import json
+import webbrowser
+
 
 DBNAME = 'stockinfo.db'
 baseurl= 'https://finance.yahoo.com/quote/'
@@ -411,12 +413,33 @@ if __name__ == "__main__":
     stock_symbol= ' '
     while stock_symbol.upper()!='EXIT':
         stock_symbol=input("Please enter a valid stock symbol or 'exit' to quit: ").upper()
+
         if stock_symbol.upper()=="EXIT":
-            print("Goodbye!")
+            print("You will now be asked chart stuff...")
             break
         else:
             attributes=Symbol(stock_symbol)
 
+    chart= ' '
+    while chart.upper()!="NO":
+        chart= input("Would you like to see a chart? Yes/No ")
+
+        if chart.upper()== "YES":
+            chart= input("Select one of the following: exchange, industry, sector, CurrentPrice")
+            if chart.upper()=='EXCHANGE':
+                webbrowser.open('https://plot.ly/~johjar/18/')
+            elif chart.upper()=='INDUSTRY':
+                webbrowser.open('https://plot.ly/~johjar/14/')
+            elif chart.upper()=='SECTOR':
+                webbrowser.open('https://plot.ly/~johjar/16/')
+            elif chart.upper()=='CURRENTPRICE':
+                webbrowser.open('https://plot.ly/~johjar/12/')
+            else:
+                print('Please enter a valid chart command')
+                # print(chart)
+        if chart.upper()=='NO':
+            print("Goodbye (again)!")
+            break
         # else:
         #     continue
 
