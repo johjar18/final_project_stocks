@@ -3,9 +3,6 @@ import sqlite3
 from bs4 import BeautifulSoup
 import sys
 import json
-import plotly.plotly as py
-import plotly.graph_objs as go
-
 
 DBNAME = 'stockinfo.db'
 baseurl= 'https://finance.yahoo.com/quote/'
@@ -23,15 +20,40 @@ try:
 # if there was no file, no worries. There will be soon!
 except:
     CACHE_DICTION = {}
-    # print(CACHE_DICTION)
+def make_request_using_cache(url):
+    unique_ident = url
 
+    ## first, look in the cache to see if we already have this data
+    if unique_ident in CACHE_DICTION:
+        print("GETTING CACHED DATA)")
+        return CACHE_DICTION[unique_ident]
+
+    ## if not, fetch the data afresh, add it to the cache,
+    ## then write the cache to file
+    else:
+        # Make the request and cache the new data
+        print("Making a request for new data..... MAY TAKE A WHILE")
+        resp = requests.get(url)
+        CACHE_DICTION[unique_ident] = resp.text
+        dumped_json_cache = json.dumps(CACHE_DICTION)
+        fw = open(CACHE_FNAME,"w")
+        fw.write(dumped_json_cache)
+        fw.close() # Close the open file
+        return CACHE_DICTION[unique_ident]
 
 # test_span=soup.find('span').text.strip()
 class Symbol:
     def __init__(self, stock_symbol):
         try:
-            make_request= requests.get(baseurl +stock_symbol +'?p=' +stock_symbol).text
-            # self.name_stock= stock_symbol
+            parameters= baseurl +str(stock_symbol) +'?p=' +str(stock_symbol)
+            # print(baseurl)
+            # print(stock_symbol)
+            # print(parameters)
+
+            # print(parameters)
+            make_request=make_request_using_cache(parameters)
+            # print(make_request)
+            self.name_stock= stock_symbol
             page_soup= BeautifulSoup(make_request, 'html.parser')
             symbol_soup= page_soup.find('h1').text.strip()
             list_symbol=[]
@@ -41,17 +63,11 @@ class Symbol:
             # print(stock_symbol)
             # print('a')
             self.stock_symbol= stock_symbol
-            # CACHE_DICTION={}
-            if make_request in CACHE_DICTION:
-                return CACHE_DICTION[make_request]
-
-            else:
-                CACHE_DICTION[make_request]= self.stock_symbol
-            print(CACHE_DICTION)
 
         except:
             self.stock_symbol=None
-            print("Error! Symbol doesn't exist!")
+            print("Error! Symbol couldn't be found!")
+
             # sys.exit()
 
 
@@ -61,7 +77,8 @@ class Symbol:
 
         # _________________________________________
         try:
-            make_request= requests.get(baseurl +stock_symbol +'/history?p=' +stock_symbol).text
+            parameters=baseurl +str(stock_symbol) +'/history?p=' +str(stock_symbol)
+            make_request= make_request_using_cache(parameters)
             page_soup= BeautifulSoup(make_request, 'html.parser')
             previous_price_soup=page_soup.find_all(attrs={'data-reactid': 76})
         #     # print('e')
@@ -70,14 +87,6 @@ class Symbol:
                 concatenate_price_previous= "$"+item.text.strip()
                 # print(concatenate_price_previous)
             self.previous_price= concatenate_price_previous
-
-            # CACHE_DICTION={}
-            if make_request in CACHE_DICTION:
-                return CACHE_DICTION[make_request]
-
-            else:
-                CACHE_DICTION[make_request]= self.previous_price
-
 
             # print(self.previous_price)
         #     # list_current_prices=[]
@@ -98,7 +107,8 @@ class Symbol:
             pass
 
         try:
-            make_request= requests.get(baseurl +stock_symbol +'/history?p=' +stock_symbol).text
+            parameters=baseurl +str(stock_symbol) +'/history?p=' +str(stock_symbol)
+            make_request= make_request_using_cache(parameters)
             page_soup= BeautifulSoup(make_request, 'html.parser')
             current_price_soup=page_soup.find_all(attrs={'data-reactid':61})
             # print(last_price_soup)
@@ -109,14 +119,6 @@ class Symbol:
             # print(current_price) #WORKS!!!
             self.current_price= concatenate_price
 
-            # CACHE_DICTION={}
-            if make_request in mr_dict:
-                return CACHE_DICTION[make_request]
-
-            else:
-                CACHE_DICTION[make_request]= self.stock_symbol
-
-
         except:
             self.current_price=None
             pass
@@ -124,7 +126,8 @@ class Symbol:
 
 
         try:
-            make_request= requests.get(baseurl +stock_symbol +'/history?p=' +stock_symbol).text
+            parameters=baseurl +str(stock_symbol) +'/history?p=' +str(stock_symbol)
+            make_request= make_request_using_cache(parameters)
             page_soup= BeautifulSoup(make_request, 'html.parser')
             high_price_soup=page_soup.find_all(attrs={'data-reactid':55})[0].text.strip()
             # print(high_price_soup)
@@ -139,11 +142,6 @@ class Symbol:
             # print(division)
             # print(subtraction)
             self.highest_price="$"+high_price_soup
-            if make_request in CACHE_DICTION:
-                return CACHE_DICTION[make_request]
-
-            else:
-                CACHE_DICTION[make_request]= self.highest_price
 
 
 
@@ -152,47 +150,33 @@ class Symbol:
 
 
         try:
-            make_request= requests.get(baseurl +stock_symbol +'?p=' +stock_symbol).text
+            parameters= baseurl +str(stock_symbol)+'?p=' +str(stock_symbol)
+            make_request= make_request_using_cache(parameters)
             page_soup= BeautifulSoup(make_request, 'html.parser')
             exchange_soup=page_soup.find_all('span',attrs={'data-reactid':9})[0].text.strip()
 
             # print(exchange_soup)
 
             self.exchange=exchange_soup
-            if make_request in CACHE_DICTION:
-                return CACHE_DICTION[make_request]
-
-            else:
-                CACHE_DICTION[make_request]= self.exchange
-
 
         except:
             self.exchange=None
 
 
         try:
-            make_request= requests.get(baseurl +stock_symbol +'?p=' +stock_symbol).text
+            parameters= baseurl +str(stock_symbol)+'?p=' +str(stock_symbol)
+            make_request= make_request_using_cache(parameters)
             page_soup= BeautifulSoup(make_request, 'html.parser')
             year_soup=page_soup.find_all(attrs={'data-reactid':100})[0].text.strip()
             # print(year_soup)
             self.year_estimate= "$" + year_soup
-            if make_request in CACHE_DICTION:
-                return CACHE_DICTION[make_request]
-
-            else:
-                CACHE_DICTION[make_request]= self.year_estimate
-
              # for item in year_soup:
             #     print(item.text.strip)
             try:
-                make_request= requests.get(baseurl +stock_symbol +'?p=' +stock_symbol).text
+                parameters= baseurl +str(stock_symbol)+'?p=' +str(stock_symbol)
+                make_request= make_request_using_cache(parameters)
                 page_soup= BeautifulSoup(make_request, 'html.parser')
                 year_soup=page_soup.find_all(attrs={'data-reactid':96})[0].text.strip()
-                if make_request in CACHE_DICTION:
-                    return CACHE_DICTION[make_request]
-
-                else:
-                    CACHE_DICTION[make_request]= self.year_estimate
                 # print(year_soup)
 
 
@@ -207,17 +191,12 @@ class Symbol:
             pass
 
         try:
-            make_request= requests.get(baseurl +stock_symbol +'?p=' +stock_symbol).text
+            parameters= baseurl +str(stock_symbol)+'?p=' +str(stock_symbol)
+            make_request= make_request_using_cache(parameters)
             page_soup= BeautifulSoup(make_request, 'html.parser')
             name_soup=page_soup.find('h1').text.strip()
             # print(name_soup)
             self.name_stock= name_soup
-
-            if make_request in CACHE_DICTION:
-                return CACHE_DICTION[make_request]
-
-            else:
-                CACHE_DICTION[make_request]= self.name_stock
 
         except:
             self.name_stock=None
@@ -225,24 +204,21 @@ class Symbol:
 
         try:
             # https://finance.yahoo.com/quote/GOOG/financials?p=GOOG
-            make_request= requests.get(baseurl +stock_symbol +'/financials?p=' +stock_symbol).text
+            parameters= baseurl +str(stock_symbol) +'/financials?p=' +str(stock_symbol)
+            make_request= make_request_using_cache(parameters)
             # print(make_request)
             page_soup= BeautifulSoup(make_request, 'html.parser')
             revenue_soup=page_soup.find_all(attrs={'data-reactid': 42})[1].text.strip()
             # print(revenue_soup)
             self.revenue= "$" + revenue_soup
-            if make_request in CACHE_DICTION:
-                return CACHE_DICTION[make_request]
-
-            else:
-                CACHE_DICTION[make_request]= self.revenue
 
         except:
             self.revenue=None
             pass
 
         try:
-            make_request= requests.get(baseurl +stock_symbol +'/profile?p=' +stock_symbol).text
+            parameters= baseurl +str(stock_symbol) +'/profile?p=' +str(stock_symbol)
+            make_request= make_request_using_cache(parameters)
             page_soup= BeautifulSoup(make_request, 'html.parser')
             industry_soup=page_soup.find_all('strong',attrs={'data-reactid': 25})
             # print(industry_soup)
@@ -251,20 +227,9 @@ class Symbol:
                 alt_industry_soup= page_soup.find_all('strong', attrs={'data-reactid':27})[0].text.strip()
                 # print(alt_industry_soup)
                 self.industry= alt_industry_soup
-
-                if make_request in CACHE_DICTION:
-                    return CACHE_DICTION[make_request]
-
-                else:
-                    CACHE_DICTION[make_request]= self.industry
             else:
                 # print(industry_soup)
                 self.industry= industry_soup[0].text.strip()
-            if make_request in CACHE_DICTION:
-                return CACHE_DICTION[make_request]
-
-            else:
-                CACHE_DICTION[make_request]= self.industry
                 # print('a')
         except:
             self.industry= None
@@ -278,16 +243,12 @@ class Symbol:
             # print(self.industry)
 
         try:
-            make_request= requests.get(baseurl +stock_symbol +'/profile?p=' +stock_symbol).text
+            parameters= baseurl +str(stock_symbol) +'/profile?p=' +str(stock_symbol)
+            make_request= make_request_using_cache(parameters)
             page_soup= BeautifulSoup(make_request, 'html.parser')
             sector_soup=page_soup.find('strong').text.strip()
             # print(sector_soup)
             self.sector= sector_soup
-            if make_request in CACHE_DICTION:
-                return CACHE_DICTION[make_request]
-
-            else:
-                CACHE_DICTION[make_request]= self.sector
 
         except:
             self.sector=None
@@ -330,70 +291,70 @@ class Symbol:
 
 
 # def create_database(attributes):
-        # try:
-        #     conn = sqlite3.connect(DBNAME)
-        #     cur = conn.cursor()
-        # except Error as e:
-        #     print(e)
-        # print('Inserting Data.')
-        #
-        # prompt= input("Stock Table exists. Delete? Yes or No")
-        # if prompt.upper()=="YES":
-        #     cur.execute("DROP TABLE IF EXISTS 'Stock'")
-        #     conn.commit()
-        #
-        # else:
-        #
-        #     stock_table = '''
-        #         CREATE TABLE IF NOT EXISTS 'Stock' (
-        #             'Id' INTEGER PRIMARY KEY,
-        #             'Symbol' TEXT NOT NULL,
-        #             'CurrentPrice' TEXT NOT NULL,
-        #             'PreviousPrice' TEXT NOT NULL,
-        #             'HighestPrice' TEXT NOT NULL,
-        #             '1-yearTargetEstimate' TEXT NOT NULL
-        #             );
-        #     '''
-        #     cur.execute(stock_table)
-        #     conn.commit()
-        #
-        #
-        #
-        #
-        #     insertion=(None, self.stock_symbol, self.current_price, self.previous_price, self.highest_price, self.year_estimate)
-        #     stock_table = 'INSERT OR IGNORE INTO "Stock" '
-        #     stock_table += 'VALUES (?, ?, ?, ?, ?, ?)'
-        #     cur.execute(stock_table, insertion)
-        #     conn.commit()
-        #
-        # prompt= input("Overview table exists. Delete? Yes or No")
-        # if prompt.upper()=="YES":
-        #
-        #     cur.execute("DROP TABLE IF EXISTS 'Overview'")
-        #     conn.commit()
-        #
-        # else:
-        #     overview_table = '''
-        #         CREATE TABLE IF NOT EXISTS 'Overview' (
-        #             'StockName' TEXT PRIMARY KEY NOT NULL,
-        #             'Exchange' TEXT,
-        #             'TotalRevenue' TEXT,
-        #             'Industry' TEXT,
-        #             'Sector' TEXT
-        #             );
-        #     '''
-        #     cur.execute(overview_table)
-        #     conn.commit()
-        #
-        #
-        #     insertion=(self.name_stock, self.exchange, self.revenue, self.industry, self.sector)
-        #     overview_table = 'INSERT OR IGNORE INTO "Overview" '
-        #     overview_table += 'VALUES (?, ?, ?, ?, ?)'
-        #
-        #     cur.execute(overview_table, insertion)
-        #     conn.commit()
-        # #
-        # #     query = "SELECT * FROM Stock"
+        try:
+            conn = sqlite3.connect(DBNAME)
+            cur = conn.cursor()
+        except Error as e:
+            print(e)
+        print('Inserting Data.')
+
+        prompt= input("Stock Table exists. Delete? Yes or No")
+        if prompt.upper()=="YES":
+            cur.execute("DROP TABLE IF EXISTS 'Stock'")
+            conn.commit()
+
+        else:
+
+            stock_table = '''
+                CREATE TABLE IF NOT EXISTS 'Stock' (
+                    'Id' INTEGER PRIMARY KEY,
+                    'Symbol' TEXT NOT NULL,
+                    'CurrentPrice' TEXT NOT NULL,
+                    'PreviousPrice' TEXT NOT NULL,
+                    'HighestPrice' TEXT NOT NULL,
+                    '1-yearTargetEstimate' TEXT NOT NULL
+                    );
+            '''
+            cur.execute(stock_table)
+            conn.commit()
+
+
+
+
+            insertion=(None, self.stock_symbol, self.current_price, self.previous_price, self.highest_price, self.year_estimate)
+            stock_table = 'INSERT OR IGNORE INTO "Stock" '
+            stock_table += 'VALUES (?, ?, ?, ?, ?, ?)'
+            cur.execute(stock_table, insertion)
+            conn.commit()
+
+        prompt= input("Overview table exists. Delete? Yes or No")
+        if prompt.upper()=="YES":
+
+            cur.execute("DROP TABLE IF EXISTS 'Overview'")
+            conn.commit()
+
+        else:
+            overview_table = '''
+                CREATE TABLE IF NOT EXISTS 'Overview' (
+                    'StockName' TEXT PRIMARY KEY NOT NULL,
+                    'Exchange' TEXT,
+                    'TotalRevenue' TEXT,
+                    'Industry' TEXT,
+                    'Sector' TEXT
+                    );
+            '''
+            cur.execute(overview_table)
+            conn.commit()
+
+
+            insertion=(self.name_stock, self.exchange, self.revenue, self.industry, self.sector)
+            overview_table = 'INSERT OR IGNORE INTO "Overview" '
+            overview_table += 'VALUES (?, ?, ?, ?, ?)'
+
+            cur.execute(overview_table, insertion)
+            conn.commit()
+        # # #
+        #     query = "SELECT * FROM Stock"
         #     overview_query= "SELECT * FROM Overview"
         #     cur.execute(query)
         #
@@ -402,14 +363,14 @@ class Symbol:
         #     for stock in cur:
         #         id = stock[0]
         #         symbol= stock[1]
-        #         # stock_mapping[symbol] = id
-        #
+        #         stock_mapping[symbol] = id
+        # #
         #     cur.execute(overview_query)
         #     # overview_mapping= {}
         #     for item in cur:
         #         stock_name= item[0]
         #         stock_mapping[stock_name]= symbol
-        #     #
+        # #     #
 
 
 # def insert_data(attributes):
