@@ -45,6 +45,7 @@ def make_request_using_cache(url):
 class Symbol:
     def __init__(self, stock_symbol):
         try:
+
             parameters= baseurl +str(stock_symbol) +'?p=' +str(stock_symbol)
             # print(baseurl)
             # print(stock_symbol)
@@ -66,9 +67,9 @@ class Symbol:
 
         except:
             self.stock_symbol=None
-            print("Error! Symbol couldn't be found!")
+            print("Error! Symbol couldn't be found! System will now shut down...")
 
-            # sys.exit()
+            sys.exit()
 
 
 
@@ -354,16 +355,15 @@ class Symbol:
             cur.execute(overview_table, insertion)
             conn.commit()
         # # #
-        #     query = "SELECT * FROM Stock"
-        #     overview_query= "SELECT * FROM Overview"
-        #     cur.execute(query)
-        #
-        #     stock_mapping = {}
-        #
-        #     for stock in cur:
-        #         id = stock[0]
-        #         symbol= stock[1]
-        #         stock_mapping[symbol] = id
+            query = "SELECT * FROM Stock"
+            overview_query= "SELECT * FROM Overview"
+            cur.execute(query)
+            cur.execute(overview_query)
+
+            stock_mapping = {}
+
+            for stock in cur:
+                stock_mapping[self.stock_symbol] = self.name_stock
         # #
         #     cur.execute(overview_query)
         #     # overview_mapping= {}
