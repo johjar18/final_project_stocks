@@ -360,15 +360,15 @@ class Symbol:
             query = "SELECT * FROM Stock"
             overview_query= "SELECT * FROM Overview"
             cur.execute(query)
-            cur.execute(overview_query)
+            # cur.execute(overview_query)
 
             stock_mapping = {}
-
+            #
             for stock in cur:
                 stock_mapping[self.stock_symbol] = self.name_stock
-        # #
-        #     cur.execute(overview_query)
-        #     # overview_mapping= {}
+        # # #
+        # #     cur.execute(overview_query)
+        # #     # overview_mapping= {}
         #     for item in cur:
         #         stock_name= item[0]
         #         stock_mapping[stock_name]= symbol
